@@ -16,37 +16,48 @@
 
   var m = sinon.match;
 
-  var emptyFn = $.noop;
   var aString = '';
   var aNumber = 0;
-  var anArray = [];
+  var anArray = function() { return []; };
   var aBool = false;
-  var anObject = {};
+  var anObject = function() { return {}; };
+  var anEventObject = function() {
+    return {
+      currentTarget: anObject(),
+      data: anObject(),
+      delegateTarget: anObject(),
+      isDefaultPrevented: sinon.stub(),
+      isImmediatePropagationStopped: sinon.stub(),
+      isPropagationStopped: sinon.stub(),
+      metaKey: false,
+      namespace: aString,
+      pageX: aNumber,
+      pageY: aNumber,
+      preventDefault: sinon.stub(),
+      relatedTarget: anObject(),
+      result: undefined,
+      stopImmediatePropagation: sinon.stub(),
+      stopPropagation: sinon.stub(),
+      target: anObject(),
+      timeStamp: 1385124829350,
+      type: undefined,
+      which: aNumber
+    };
+  };
+  var aPromiseObject = function() {
+    return {
+      always: sinon.stub(),
+      done: sinon.stub(),
+      fail: sinon.stub(),
+      pipe: sinon.stub(),
+      progress: sinon.stub(),
+      promise: sinon.stub(),
+      state: sinon.stub(),
+      then: sinon.stub()
+    };
+  };
 
   var spy;
-
-  /*
-   var anEventObject = {
-   currentTarget: {},
-   data: {},
-   delegateTarget: {},
-   isDefaultPrevented: emptyFn,
-   isImmediatePropagationStopped: emptyFn,
-   isPropagationStopped: emptyFn,
-   metaKey: false,
-   namespace: '',
-   pageX: 0,
-   pageY: 0,
-   preventDefault: emptyFn,
-   relatedTarget: {},
-   result: undefined,
-   stopImmediatePropagation: emptyFn,
-   stopPropagation: emptyFn,
-   target: {},
-   timeStamp: 1385124829350,
-   type: undefined,
-   which: 0
-   };*/
 
   // Our jQuery function $()
   function jquery(arg1, arg2, prevObj) {
@@ -126,19 +137,19 @@
         case 'data':
           stub.withArgs(m.string, m.object).returns(obj);
           stub.withArgs(m.object).returns(obj);
-          stub.withArgs(m.string).returns(anObject);
-          stub.returns(anObject);
+          stub.withArgs(m.string).returns(anObject());
+          stub.returns(anObject());
           break;
         case 'each':
-          stub.withArgs(m.func).yieldsOn(anObject, aNumber, anObject);
+          stub.withArgs(m.func).yieldsOn(anObject(), aNumber, anObject());
           break;
         case 'end':
           // Return the previous object (end filtering)
           stub.returns(obj.__prevObj);
           break;
         case 'get':
-          stub.withArgs(m.number).returns(anObject);
-          stub.returns(anArray);
+          stub.withArgs(m.number).returns(anObject());
+          stub.returns(anArray());
           break;
         case 'hasClass':
           stub.returns(aBool);
@@ -167,7 +178,7 @@
           stub.returns({top: 0, left: 0});
           break;
         case 'promise':
-          stub.returns(createPromiseObject());
+          stub.returns(aPromiseObject());
           break;
         case 'prop':
           stub.withArgs(m.string, m.string.or(m.number).or(m.bool).or(m.func)).returns(obj);
@@ -175,7 +186,7 @@
           stub.withArgs(m.object).returns(obj);
           break;
         case 'queue':
-          stub.withArgs(m.string).returns(anArray);
+          stub.withArgs(m.string).returns(anArray());
           stub.withArgs(m.string, m.array.or(m.func)).returns(obj);
           break;
         case 'scrollLeft':
@@ -188,14 +199,14 @@
           break;
         case 'serializeArray':
         case 'toArray':
-          stub.returns(anArray);
+          stub.returns(anArray());
           break;
         case 'text':
           stub.withArgs(m.string.or(m.func)).returns(obj);
           stub.returns(aString);
           break;
         case 'triggerHandler':
-          stub.returns(anObject); // could be 'undefined' too, override it in your test
+          stub.returns(anObject()); // could be 'undefined' too, override it in your test
           break;
         case 'val':
           stub.withArgs(m.string.or(m.array).or(m.func)).returns(obj);
@@ -220,6 +231,10 @@
   jquery.__instanceProperties = {};
   // jQuery object methods
   jquery.__instanceStubs = [];
+  // A function to mock event objects
+  jquery.__createEventObject = anEventObject;
+  // A function to reset the state of static stubs
+  jquery.__resetStaticStubs = resetStaticStubs;
 
   // Traverse the jQuery function object to get all static properties
   // and stub all static methods
@@ -233,16 +248,16 @@
       // definition.
       switch (method) {
         case 'extend':
-          stub.returns(anObject);
+          stub.returns(anObject());
           break;
         case 'trim':
           stub.returnsArg(0);
           break;
         case 'type':
           stub.returns('undefined');
-          stub.withArgs(m.instanceOf(Error)).returns('error');
           stub.withArgs(!m.defined).returns('undefined');
           stub.withArgs(null).returns('null');
+          stub.withArgs(m.instanceOf(Error)).returns('error');
           stub.withArgs(m.string).returns('string');
           stub.withArgs(m.number).returns('number');
           stub.withArgs(m.bool).returns('boolean');
@@ -304,17 +319,20 @@
     }
   }());
 
-  function createPromiseObject() {
-    return {
-      always: sinon.stub(),
-      done: sinon.stub(),
-      fail: sinon.stub(),
-      pipe: sinon.stub(),
-      progress: sinon.stub(),
-      promise: sinon.stub(),
-      state: sinon.stub(),
-      then: sinon.stub()
-    };
+  function resetStaticStubs() {
+    var stubName, i, l;
+    // reset jquery stub
+    this.reset();
+    // reset static stubs
+    console.log(this.__staticStubs);
+    for (i = 0, l = this.__staticStubs.length; i < l; i++) {
+      stubName = this.__staticStubs[i];
+      if (typeof stubName.obj !== 'undefined') {
+        this[stubName.obj][stubName.stub].reset();
+      } else {
+        this[stubName].reset();
+      }
+    }
   }
 
   // Add a spy to jquery function
