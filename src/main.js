@@ -324,7 +324,6 @@
     // reset jquery stub
     this.reset();
     // reset static stubs
-    console.log(this.__staticStubs);
     for (i = 0, l = this.__staticStubs.length; i < l; i++) {
       stubName = this.__staticStubs[i];
       if (typeof stubName.obj !== 'undefined') {
