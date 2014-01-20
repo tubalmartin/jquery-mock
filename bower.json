@@ -1,0 +1,14 @@
+{
+  "name": "jquery-mock",
+  "version": "0.1.0",
+  "description": "jQuery mocked with Sinon.js for unit testing",
+  "main": "src/main.js",
+  "dependencies": {
+    "requirejs": "2.1.x",
+    "jquery": "1.10.x"
+  },
+  "ignore": [
+    "**/.*",
+    "tests"
+  ]
+}
