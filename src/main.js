@@ -60,7 +60,7 @@
   var spy;
 
   // Our jQuery function $()
-  function jquery(arg1, arg2, prevObj) {
+  function jquery(arg1, arg2) {
     var obj = {};
     var props = jquery.__instanceProperties;
     var methods = jquery.__instanceStubs;
@@ -76,7 +76,7 @@
     // Give each object and id for easier debugging
     obj.__id = jquery.__id++;
     // Support .end() method
-    obj.__prevObj = prevObj || null;
+    obj.__prevObj = arguments[2] || null;
     // Set the selector property as jQuery does
     obj.selector = typeof arg1 === 'string' && arg1 || '';
 
@@ -250,6 +250,7 @@
         case 'extend':
           stub.returns(anObject());
           break;
+        case 'camelCase':
         case 'trim':
           stub.returnsArg(0);
           break;
